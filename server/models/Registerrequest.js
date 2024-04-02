@@ -13,7 +13,7 @@ const RegisterSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: ['Student', 'Teacher'],
+            enum: ['Student', 'faculty'],
             required: true
         },
         verified: {

@@ -31,22 +31,31 @@ const transporter = nodemailer.createTransport({
       });
       console.log("Email Sent Successfully");
   }
-async function updateuser(email){
-    const user = await Registerrequest.findOne({
-        email,
-      });
-      if (!user) {
-        return [false, 'User not found'];
-      }
-      const updatedUser = await Registerrequest.findByIdAndUpdate(user._id, {
-        $set: { verified: true },
-      });
+  async function updateuser(email) {
+    const user = await Registerrequest.findOne({ email });
+    if (!user) {
+        return false;
+    }
+    try {
+        await Registerrequest.findByIdAndUpdate(user._id, {
+            $set: { verified: true },
+        });
+        return true; 
+    } catch (error) {
+        console.error("Error updating user:", error);
+        return false; 
+    }
 }
+
+/*
 async function verify(req , res){
+  console.log("Request Body is " , req.body);
     const { otp} = req.body;
+    console.log(otp , OTP);
     if(otp === OTP){
         console.log("Correct OTP");
-        updateuser(Uemail);
+        await updateuser(Uemail);
+        res.redirect("/Login")
     }
     else{
         OTPcount++;
@@ -58,10 +67,39 @@ async function verify(req , res){
         res.send("Wrong OTP");
     }
     
+}*/
+async function verify(req, res) {
+  console.log("Request Body is ", req.body);
+  const { otp } = req.body;
+  console.log(otp, OTP);
+  try {
+      if (otp === OTP) {
+          console.log("Correct OTP");
+          const userUpdated = await updateuser(Uemail);
+          if (userUpdated) {
+            console.log("Updated user  successfully!");
+              res.status(200).send("OTP Verification Successfull");
+          } else {
+              res.status(404).send("User not found");
+          }
+      } else {
+          OTPcount++;
+          if (OTPcount >= 3) {
+              console.log("Deleting the entry");
+              await Registerrequest.deleteOne({ email: Uemail });
+              console.log("Deleted Successfully");
+          }
+          res.send("Wrong OTP");
+      }
+  } catch (error) {
+      console.error("Error in verify function:", error);
+      res.status(500).send("An error occurred while verifying OTP.");
+  }
 }
 
 async function  Registerreq(req , res){
     const {name , email , role , createdAt} = req.body;
+    console.log(req.body);
     Uemail = email;
     const existingUser = await Registerrequest.findOne({email});
     if (existingUser) return res.status(400).send("Email already in use.");
