@@ -1,6 +1,7 @@
 const Registerrequest = require("../models/Registerrequest");
 const otpGenerator = require('otp-generator')
 const nodemailer = require("nodemailer");
+const RandomIdgen = require("./RandomIdgen");
 
 
 let OTP;
@@ -47,27 +48,6 @@ const transporter = nodemailer.createTransport({
     }
 }
 
-/*
-async function verify(req , res){
-  console.log("Request Body is " , req.body);
-    const { otp} = req.body;
-    console.log(otp , OTP);
-    if(otp === OTP){
-        console.log("Correct OTP");
-        await updateuser(Uemail);
-        res.redirect("/Login")
-    }
-    else{
-        OTPcount++;
-        if(OTPcount >=3){
-            console.log("Deleting the entry");
-            await  Registerrequest.deleteOne({email : Uemail});
-            console.log("Deleted Successfully");
-        }
-        res.send("Wrong OTP");
-    }
-    
-}*/
 async function verify(req, res) {
   console.log("Request Body is ", req.body);
   const { otp } = req.body;
@@ -98,6 +78,7 @@ async function verify(req, res) {
 }
 
 async function  Registerreq(req , res){
+   // await RandomIdgen("jiyanshusharma17@gmail.com");
     const {name , email , role , createdAt} = req.body;
     console.log(req.body);
     Uemail = email;
@@ -108,8 +89,28 @@ async function  Registerreq(req , res){
     const Regreq = await Registerrequest.create({name , email , role , createdAt});
     res.send("User Registered , Verification Pending");
 }
+async function login(req , res){
+    try {
+        const { username, password } = req.body;
+        if(!username || !password ){
+          return res.json({message:'All fields are required'})
+        }
+        const user = await User.findOne({ username });
+        if(!user){
+          return res.json({message:'Incorrect password or email' }) 
+        }
+        const auth = await bcrypt.compare(password,user.password)
+        if (!auth) {
+          return res.json({message:'Incorrect password or email' }) 
+        }
+        res.status(201).json({ message: "User logged in successfully", success: true });
+         next()
+      } catch (error) {
+        console.error(error);
+      }
+}
 module.exports = {
-    Registerreq, verify
+    Registerreq, verify, login
 }
 
 
